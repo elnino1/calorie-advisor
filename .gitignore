@@ -1,0 +1,46 @@
+# --- Configuration personnelle (identifiants propres à votre compte et à votre iPhone) ---
+Config/Signing.local.xcconfig
+scripts/refresh.config
+
+# --- Projet Xcode : généré par XcodeGen depuis project.yml ---
+*.xcodeproj/
+*.xcworkspace/
+
+# --- Produits de compilation ---
+build/
+DerivedData/
+*.ipa
+*.dSYM
+*.dSYM.zip
+*.xcarchive/
+
+# --- Données utilisateur Xcode ---
+xcuserdata/
+*.xcuserstate
+*.xcscmblueprint
+*.xccheckout
+
+# --- Swift Package Manager (si des dépendances sont ajoutées un jour) ---
+.swiftpm/
+.build/
+
+# --- Signature : ne jamais versionner certificats ni profils ---
+*.mobileprovision
+*.provisionprofile
+*.p12
+*.cer
+
+# --- Journaux ---
+*.log
+
+# --- macOS ---
+.DS_Store
+._*
+.Spotlight-V100
+.Trashes
+
+# --- Éditeurs ---
+.vscode/
+.idea/
+*.swp
+*~

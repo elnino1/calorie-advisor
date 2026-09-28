@@ -1,0 +1,6 @@
+// Valeurs par défaut. Ne pas modifier ici : copier Signing.local.xcconfig.example
+// en Signing.local.xcconfig et y mettre votre équipe (Personal Team) et un bundle id unique.
+DEVELOPMENT_TEAM =
+BUNDLE_ID = com.example.calorieadvisor
+
+#include? "Signing.local.xcconfig"

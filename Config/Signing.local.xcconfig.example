@@ -1,0 +1,9 @@
+// Copier ce fichier en Config/Signing.local.xcconfig
+// DEVELOPMENT_TEAM : identifiant (10 caractères) de votre "Personal Team"
+//   Xcode > Settings > Accounts > (votre Apple ID) > Personal Team,
+//   Ce n'est PAS le nom de l'équipe. Pour l'obtenir dans le Terminal :
+//   security find-certificate -a -c "Apple Development" -p | openssl x509 -noout -subject
+//   → la valeur OU=XXXXXXXXXX est l'identifiant.
+// BUNDLE_ID : doit être unique au monde (ex. com.<votrenom>.calorieadvisor)
+DEVELOPMENT_TEAM = ABCDE12345
+BUNDLE_ID = com.votrenom.calorieadvisor
