@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Synthèse du jour : apport, dépense, balance et répartition des macronutriments.
+/// Synthèse du jour : apport, dépense, balance, répartition des macronutriments et fibres.
 struct DaySummaryCard: View {
     let intake: Nutrients
     let energy: DayEnergy?
@@ -39,19 +39,25 @@ struct DaySummaryCard: View {
         .background(.background.secondary, in: RoundedRectangle(cornerRadius: 20))
     }
 
+    private var status: CalorieGoal.Status { CalorieGoal.status(balance: balance, deficit: targetDeficit) }
+    private var remaining: Double { budget - intake.kcal }
+
+    /// Budget du jour (dépense − déficit visé) : kcal restantes, ou dépassement en toutes lettres.
     private var ring: some View {
         ZStack {
             Circle().stroke(.quaternary, lineWidth: 12)
             Circle()
                 .trim(from: 0, to: min(progress, 1))
-                .stroke(progress > 1 ? Color.orange : Color.green,
-                        style: StrokeStyle(lineWidth: 12, lineCap: .round))
+                .stroke(status.color, style: StrokeStyle(lineWidth: 12, lineCap: .round))
                 .rotationEffect(.degrees(-90))
             VStack(spacing: 0) {
-                Text((budget - intake.kcal).kcalText)
+                Text(abs(remaining).kcalText)
                     .font(.title2.bold())
                     .monospacedDigit()
-                Text("restantes").font(.caption2).foregroundStyle(.secondary)
+                Text(remaining >= 0 ? "restantes" : "au-dessus\ndu budget")
+                    .font(.caption2)
+                    .multilineTextAlignment(.center)
+                    .foregroundStyle(.secondary)
             }
         }
         .frame(width: 110, height: 110)
@@ -60,18 +66,35 @@ struct DaySummaryCard: View {
 
     private var balanceBanner: some View {
         let isDeficit = balance <= 0
-        let onTarget = CalorieGoal.isOnTarget(balance: balance, deficit: targetDeficit)
-        return HStack {
-            Image(systemName: isDeficit ? "arrow.down.right.circle.fill" : "arrow.up.right.circle.fill")
-            Text(isDeficit ? "Déficit" : "Surplus")
-            if isToday { Text("(à ce stade)").foregroundStyle(.secondary) }
-            Spacer()
-            Text("\(abs(balance).kcalText) kcal").bold().monospacedDigit()
+        return VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Image(systemName: isDeficit ? "arrow.down.right.circle.fill" : "arrow.up.right.circle.fill")
+                    .foregroundStyle(status.color)
+                Text(isDeficit ? "Déficit" : "Surplus")
+                if isToday { Text("(à ce stade)").foregroundStyle(.secondary) }
+                Spacer()
+                Text("\(abs(balance).kcalText) kcal").bold().monospacedDigit()
+            }
+            .font(.subheadline)
+            Text(goalText).font(.caption).foregroundStyle(.secondary)
         }
-        .font(.subheadline)
-        .foregroundStyle(onTarget ? Color.green : Color.orange)
         .padding(10)
-        .background((onTarget ? Color.green : Color.orange).opacity(0.12), in: RoundedRectangle(cornerRadius: 12))
+        .background(status.color.opacity(0.15), in: RoundedRectangle(cornerRadius: 12))
+    }
+
+    /// Position par rapport à l'objectif, en mots.
+    private var goalText: String {
+        let gap = abs(balance + targetDeficit).kcalText
+        if abs(targetDeficit) < 1 {
+            return status == .onTarget ? "Maintien respecté (écart de moins de 200 kcal)"
+                                       : "Objectif de maintien : écart de \(abs(balance).kcalText) kcal"
+        }
+        let goal = "Objectif : \(CalorieGoal.label(for: targetDeficit))"
+        return switch status {
+        case .onTarget: "\(goal), atteint (\(gap) kcal de marge)"
+        case .partial: "\(goal), il manque \(gap) kcal"
+        case .off: "\(goal), écart de \(gap) kcal"
+        }
     }
 
     private func metric(_ title: String, _ value: Double, symbol: String, color: Color) -> some View {
@@ -136,6 +159,16 @@ struct MacroBar: View {
                     }
                     .frame(maxWidth: .infinity)
                 }
+                // Les fibres n'entrent pas dans la répartition des calories : affichées par rapport au repère.
+                VStack(spacing: 2) {
+                    HStack(spacing: 4) {
+                        Circle().fill(.green).frame(width: 6, height: 6)
+                        Text("Fibres").font(.caption2).foregroundStyle(.secondary)
+                    }
+                    Text("\(nutrients.fiber.gramsText) g").font(.caption.bold()).monospacedDigit()
+                    Text("/ \(Int(fiberTarget)) g").font(.caption2).foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity)
             }
         }
     }

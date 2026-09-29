@@ -3,9 +3,13 @@ import SwiftUI
 
 struct JournalView: View {
     @State private var day = Calendar.current.startOfDay(for: .now)
+    /// Jour courant, mis à jour au passage de minuit et au retour au premier plan : SwiftUI ne
+    /// redessine pas la vue d'elle-même quand la date change (app restée ouverte en arrière-plan).
+    @State private var today = Calendar.current.startOfDay(for: .now)
     @State private var addingMeal: MealType?
+    @Environment(\.scenePhase) private var scenePhase
 
-    private var isToday: Bool { Calendar.current.isDateInToday(day) }
+    private var isToday: Bool { day >= today }
 
     var body: some View {
         NavigationStack {
@@ -28,7 +32,20 @@ struct JournalView: View {
                 .sheet(item: $addingMeal) { meal in
                     AddFoodView(day: day, meal: meal)
                 }
+                .onReceive(NotificationCenter.default.publisher(for: .NSCalendarDayChanged)
+                    .receive(on: RunLoop.main)) { _ in refreshToday() }
+                .onChange(of: scenePhase) { _, phase in
+                    if phase == .active { refreshToday() }
+                }
         }
+    }
+
+    /// Passe au nouveau jour si le journal affichait « aujourd'hui » ; un jour passé consulté reste affiché.
+    private func refreshToday() {
+        let now = Calendar.current.startOfDay(for: .now)
+        guard now != today else { return }
+        if day == today { day = now }
+        today = now
     }
 
     private var title: String {
@@ -36,9 +53,9 @@ struct JournalView: View {
     }
 
     private func shift(_ days: Int) {
+        refreshToday()
         let calendar = Calendar.current
-        guard let next = calendar.date(byAdding: .day, value: days, to: day),
-              next <= calendar.startOfDay(for: .now) else { return }
+        guard let next = calendar.date(byAdding: .day, value: days, to: day), next <= today else { return }
         day = calendar.startOfDay(for: next)
     }
 }
@@ -76,6 +93,12 @@ private struct DayJournal: View {
             .listRowInsets(EdgeInsets())
             .listRowBackground(Color.clear)
 
+            if !entries.isEmpty {
+                Section {
+                    DietScoreCard(entries: entries, isToday: Calendar.current.isDateInToday(day))
+                }
+            }
+
             ForEach(MealType.meals) { meal in
                 mealSection(meal)
             }
@@ -84,6 +107,7 @@ private struct DayJournal: View {
         .listSectionSpacing(12)
         .refreshable { await loadEnergy() }
         .task(id: day) { await loadEnergy() }
+        .onChange(of: energyStore.revision) { Task { await loadEnergy() } }
         .sheet(item: $editing) { entry in
             EntryEditView(entry: entry)
         }

@@ -21,6 +21,7 @@ struct CalorieAdvisorApp: App {
 struct RootView: View {
     @Environment(EnergyStore.self) private var energyStore
     @AppStorage(ProfileKey.healthKitEnabled) private var healthKitEnabled = true
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         TabView {
@@ -30,7 +31,13 @@ struct RootView: View {
             Tab("Réglages", systemImage: "gearshape") { SettingsView() }
         }
         .task {
-            if healthKitEnabled { await energyStore.requestAuthorization() }
+            if healthKitEnabled {
+                await energyStore.requestAuthorization()
+                energyStore.startObserving()
+            }
+        }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { energyStore.refresh() }
         }
     }
 }

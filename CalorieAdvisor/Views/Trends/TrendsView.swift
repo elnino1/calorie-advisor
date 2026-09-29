@@ -54,6 +54,15 @@ private struct TrendsContent: View {
     var body: some View {
         let stats = self.stats
         ScrollView {
+            NavigationLink {
+                ReportsView()
+            } label: {
+                Label("Bilans par semaine et par mois", systemImage: "calendar")
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding()
+                    .background(.background.secondary, in: RoundedRectangle(cornerRadius: 16))
+            }
+            .padding([.horizontal, .top])
             if stats.isEmpty {
                 ContentUnavailableView("Pas encore de données", systemImage: "chart.bar",
                                        description: Text("Les journées complètes saisies apparaîtront ici."))
@@ -61,7 +70,7 @@ private struct TrendsContent: View {
             } else {
                 VStack(spacing: 16) {
                     summaryTiles(stats)
-                    card("Balance quotidienne", subtitle: "Déficit en vert, surplus en orange") { balanceChart(stats) }
+                    card("Balance quotidienne", subtitle: "Vert : objectif atteint · jaune : insuffisant · orange : sens inverse") { balanceChart(stats) }
                     card("Apport et dépense", subtitle: "kcal par jour") { intakeChart(stats) }
                     card("Balance cumulée", subtitle: "Équivalent estimé en kg (7 700 kcal ≈ 1 kg)") { cumulativeChart(stats) }
                     card("Hydratation", subtitle: "Boissons sans alcool par jour ; objectif en pointillés") { hydrationChart(stats) }
@@ -128,7 +137,7 @@ private struct TrendsContent: View {
             ForEach(stats) { s in
                 let balance = s.balance ?? 0
                 BarMark(x: .value("Jour", s.day, unit: .day), y: .value("Balance", balance))
-                    .foregroundStyle(balance <= 0 ? Color.green : Color.orange)
+                    .foregroundStyle(CalorieGoal.status(balance: balance, deficit: targetDeficit).color)
             }
             RuleMark(y: .value("Objectif", -targetDeficit))
                 .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 4]))

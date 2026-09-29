@@ -52,7 +52,7 @@ struct EstimateReviewView: View {
                                 Spacer()
                                 Text("\(row.nutrients.kcal.kcalText) kcal").monospacedDigit().bold()
                             }
-                            Text("P \(row.nutrients.protein.gramsText) g · G \(row.nutrients.carbs.gramsText) g · L \(row.nutrients.fat.gramsText) g"
+                            Text("P \(row.nutrients.protein.gramsText) g · G \(row.nutrients.carbs.gramsText) g · L \(row.nutrients.fat.gramsText) g · fibres \(row.nutrients.fiber.gramsText) g"
                                  + (row.nutrients.alcohol > 0 ? " · alcool \(row.nutrients.alcohol.gramsText) g" : ""))
                                 .font(.caption).foregroundStyle(.secondary)
                         }

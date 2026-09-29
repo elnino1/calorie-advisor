@@ -79,4 +79,24 @@ struct CalorieGoal: DynamicProperty {
         if abs(deficit) < 1 { return abs(balance) <= 200 }
         return deficit > 0 ? balance <= -deficit : balance >= -deficit
     }
+
+    /// Atteint / dans le bon sens mais insuffisant / dans le mauvais sens.
+    enum Status {
+        case onTarget, partial, off
+
+        var color: Color {
+            switch self {
+            case .onTarget: .green
+            case .partial: .yellow
+            case .off: .orange
+            }
+        }
+    }
+
+    static func status(balance: Double, deficit: Double) -> Status {
+        if isOnTarget(balance: balance, deficit: deficit) { return .onTarget }
+        // Déficit (ou surplus pour une prise de poids) réel, mais plus faible que visé.
+        if deficit >= 1 && balance < 0 || deficit <= -1 && balance > 0 { return .partial }
+        return .off
+    }
 }

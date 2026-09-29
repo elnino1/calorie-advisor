@@ -96,7 +96,7 @@ struct InsightsView: View {
         }
         let hydrationTarget = HydrationGoal.current(latestWeight: energyStore.latestWeight)
         lines.append("Objectif d'hydratation : \(Int(hydrationTarget)) ml/jour de boissons sans alcool.")
-        lines.append("Jours (apport kcal / dépense kcal / balance ; protéines, glucides, lipides, alcool en g ; boissons en ml) :")
+        lines.append("Jours (apport kcal / dépense kcal / balance ; protéines, glucides, sucres, lipides, fibres, alcool en g ; boissons en ml ; note de composition sur 5) :")
         let formatter = Date.FormatStyle().weekday(.abbreviated).day().month(.abbreviated)
         for s in stats {
             let label = calendar.isDateInToday(s.day) ? "aujourd'hui (en cours)" : s.day.formatted(formatter)
@@ -104,7 +104,8 @@ struct InsightsView: View {
             let burned = s.energy.map { "\(Int($0.total))" } ?? "?"
             let balance = s.balance.map { String(format: "%+d", Int($0)) } ?? "?"
             let h = s.hydration
-            lines.append("- \(label) : \(Int(n.kcal)) / \(burned) / \(balance) ; P\(Int(n.protein)) G\(Int(n.carbs)) L\(Int(n.fat)) A\(Int(n.alcohol)) ; boissons \(Int(h.hydrating)) (eau \(Int(h.volume(.water))), café/thé \(Int(h.volume(.hot))), autres \(Int(h.volume(.other))), alcool \(Int(h.volume(.alcohol))))")
+            let score = s.dietScore(hydrationTarget: hydrationTarget).map { " ; note \($0.value.scoreText)/5" } ?? ""
+            lines.append("- \(label) : \(Int(n.kcal)) / \(burned) / \(balance) ; P\(Int(n.protein)) G\(Int(n.carbs)) S\(Int(n.sugar)) L\(Int(n.fat)) F\(Int(n.fiber)) A\(Int(n.alcohol)) ; boissons \(Int(h.hydrating)) (eau \(Int(h.volume(.water))), café/thé \(Int(h.volume(.hot))), autres \(Int(h.volume(.other))), alcool \(Int(h.volume(.alcohol))))\(score)")
         }
 
         // Aliments les plus caloriques de la période.
