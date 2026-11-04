@@ -113,7 +113,12 @@ semaine ; pas d'iCloud, de notifications push ni d'App Groups. Les données rest
 - **Après l'ajout ou la suppression d'un fichier Swift**, régénérer le projet : `xcodegen generate`.
   `ios-updater.sh` le fait automatiquement. Sans régénération, Xcode ignore les nouveaux fichiers
   (« cannot find 'X' in scope »).
-- Swift 5 (mode de langage), cible iOS 26.0 minimum.
+- Swift 6 (mode de langage, concurrence stricte), isolation `MainActor` par défaut ; les types valeur
+  utilisés par les modèles SwiftData (`Nutrients`, `FoodTemplate`, `MealType`…) sont `nonisolated`.
+  Cible iOS 26.0 minimum.
+- Tests unitaires (Swift Testing) dans `CalorieAdvisorTests/` : nutriments, note de composition,
+  objectifs, hydratation, journal, base d'aliments. **⌘U** dans Xcode, ou
+  `xcodebuild test -project CalorieAdvisor.xcodeproj -scheme CalorieAdvisor -destination 'platform=iOS Simulator,name=<iPhone>'`.
 
 ## Intégration continue
 
@@ -121,7 +126,7 @@ Workflows GitHub Actions standard (skill `github-ci`, dans `.github/workflows/`)
 
 | Workflow | Déclenchement | Rôle |
 |---|---|---|
-| `test.yml` (`Test`) | chaque push, toutes branches | génère le projet (XcodeGen), compile l'app sur un simulateur iPhone sans signature ; SwiftLint |
+| `test.yml` (`Test`) | chaque push, toutes branches | génère le projet (XcodeGen), compile l'app et lance les tests unitaires sur un simulateur iPhone sans signature ; SwiftLint |
 | `auto_pr.yml` | push sur une autre branche que `main` | ouvre (ou met à jour) une PR vers `main`, description tirée des commits |
 | `release.yml` | `Test` réussi après un push sur `main` | tag semver (`feat:` → mineure, `BREAKING CHANGE` → majeure, sinon patch) + GitHub Release |
 
