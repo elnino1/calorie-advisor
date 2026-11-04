@@ -1,7 +1,7 @@
 import Foundation
 
 /// Aliment "candidat" (résultat de recherche, code-barre, estimation IA…) avant ajout au journal.
-struct FoodTemplate: Identifiable, Hashable {
+nonisolated struct FoodTemplate: Identifiable, Hashable, Sendable {
     enum Source: String {
         case saved, recent, database, openFoodFacts, ai, manual
 
@@ -47,7 +47,7 @@ struct FoodTemplate: Identifiable, Hashable {
     }
 }
 
-extension String {
+nonisolated extension String {
     /// Normalisation pour la recherche : minuscules, sans accents.
     var searchKey: String {
         folding(options: [.caseInsensitive, .diacriticInsensitive], locale: Locale(identifier: "fr_FR"))

@@ -1,7 +1,7 @@
 import Foundation
 
 /// Valeurs nutritionnelles pour une quantité donnée (kcal et grammes).
-struct Nutrients: Hashable, Codable {
+nonisolated struct Nutrients: Hashable, Codable, Sendable {
     var kcal: Double = 0
     var protein: Double = 0
     var carbs: Double = 0
