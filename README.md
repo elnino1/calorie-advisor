@@ -5,7 +5,7 @@ jour le déficit ou le surplus calorique pour atteindre ses objectifs de santé 
 Cahier des charges initial : `application_comptage_calorie.md`.
 
 L'app est installée **sans compte Apple Developer payant** (Apple ID gratuit, « Personal Team ») et
-re-signée automatiquement par un script sur le Mac, la signature gratuite n'étant valable que 7 jours.
+re-signée automatiquement par `../ios-updater` sur le Mac, la signature gratuite n'étant valable que 7 jours.
 
 ## Fonctionnalités
 
@@ -82,124 +82,66 @@ visibles sous « Données transmises au modèle ».
 - XcodeGen : `brew install xcodegen`. Le projet Xcode n'est pas versionné, il est généré depuis `project.yml`.
 - iPhone compatible Apple Intelligence (iPhone 15 Pro ou plus récent), Apple Intelligence activé.
 
-## Première installation
+## Installation et rafraîchissement
 
-### 1. Signature
-
-```bash
-cp Config/Signing.local.xcconfig.example Config/Signing.local.xcconfig
-```
-
-Éditer `Config/Signing.local.xcconfig` :
-
-```
-DEVELOPMENT_TEAM = A1B2C3D4E5
-BUNDLE_ID = com.votrenom.calorieadvisor
-```
-
-- `DEVELOPMENT_TEAM` est l'**identifiant de 10 caractères** de la Personal Team, **pas son nom** ni
-  l'adresse e-mail. Pour le trouver :
-  ```bash
-  defaults read com.apple.dt.Xcode IDEProvisioningTeamByIdentifier 2>/dev/null || defaults read com.apple.dt.Xcode IDEProvisioningTeams
-  ```
-  Prendre le `teamID` du bloc contenant `isFreeProvisioningTeam = 1`. Autre méthode : choisir la
-  Personal Team dans Xcode (cible > Signing & Capabilities > Team), puis
-  `grep DEVELOPMENT_TEAM CalorieAdvisor.xcodeproj/project.pbxproj`.
-- `BUNDLE_ID` doit être unique au monde.
-
-### 2. Génération du projet et premier lancement
+La compilation, la signature (Apple ID gratuit, valable 7 jours) et l'installation sur l'iPhone sont
+gérées par **`../ios-updater`**, commun à toutes les apps personnelles : voir son `README.md`.
+Le bundle id et l'équipe sont déclarés dans `../ios-updater/ios-updater.conf`, qui génère
+`Config/Signing.local.xcconfig`.
 
 ```bash
-xcodegen generate
-open CalorieAdvisor.xcodeproj
+../ios-updater/ios-updater.sh --force calorie-advisor   # après une modification du code
 ```
 
-1. Sur l'iPhone branché en USB : Réglages > Confidentialité et sécurité > **Mode développeur** activé.
-2. Dans Xcode : schéma **CalorieAdvisor**, destination **votre iPhone** (pas « My Mac »), puis ⌘R.
-3. Sur l'iPhone : Réglages > Général > VPN et gestion de l'appareil > faire confiance au développeur.
-4. Dans Xcode > Window > Devices and Simulators, cocher **Connect via network** pour permettre
-   l'installation en Wi-Fi.
-5. Au premier lancement de l'app, autoriser l'accès à Santé, puis renseigner le profil dans Réglages.
+Pour travailler dans Xcode : lancer une fois ios-updater (ou `xcodegen generate` si
+`Config/Signing.local.xcconfig` existe déjà), puis `open CalorieAdvisor.xcodeproj`.
 
 > Ouvrir `CalorieAdvisor.xcodeproj`, jamais un fichier `.swift` seul : Xcode créerait sinon un projet
 > temporaire compilé pour macOS, avec des erreurs « cannot find … in scope ».
 
-## Rafraîchissement automatique
+Au premier lancement de l'app, autoriser l'accès à Santé, puis renseigner le profil dans Réglages.
+La date d'expiration de la signature est visible dans l'app : Réglages > Application (en rouge à
+moins de 2 jours). **Ne jamais supprimer l'app de l'iPhone**, même expirée : la réinstaller conserve
+les données.
 
-Avec un Apple ID gratuit, le profil de signature expire **7 jours** après sa création. Passé ce délai,
-l'app ne s'ouvre plus. Le script `scripts/refresh.sh` re-signe et réinstalle l'app avant l'expiration.
-
-### Mise en place
-
-```bash
-cp scripts/refresh.config.example scripts/refresh.config
-xcrun devicectl list devices      # copier l'« Identifier » de l'iPhone
-```
-
-Éditer `scripts/refresh.config` :
-
-```bash
-DEVICE_ID="<Identifier de l'iPhone>"   # remplacer la valeur d'exemple 00000000-…
-RENEW_THRESHOLD_HOURS=72               # renouveler quand il reste moins de 72 h
-```
-
-Puis :
-
-```bash
-scripts/refresh.sh --force        # premier essai manuel : doit finir par « OK, app valide jusqu'au … »
-scripts/install-launchd.sh        # tâche automatique tous les jours à 9 h 30 et 21 h
-```
-
-### Fonctionnement de `refresh.sh`
-
-1. Lit la date d'expiration de la dernière installation réussie. S'il reste plus de 72 h, il ne fait
-   rien (sauf avec `--force`).
-2. Régénère le projet avec XcodeGen si `project.yml` a changé (toujours avec `--force`).
-3. Supprime le profil de provisionnement en cache pour ce bundle id, afin d'obtenir un nouveau profil
-   valable 7 jours pleins.
-4. Compile en Release et signe (`xcodebuild -allowProvisioningUpdates`).
-5. Installe l'app **par-dessus** la version présente (`xcrun devicectl device install app`) : le
-   journal, les aliments enregistrés et les réglages sont conservés.
-6. Mémorise la nouvelle date d'expiration et envoie une notification macOS.
-
-Avec deux vérifications par jour et un seuil de 72 h, le renouvellement a lieu vers le 4ᵉ jour, ce qui
-laisse environ 6 tentatives si l'iPhone n'est pas joignable. En cas d'échec, une notification
-macOS l'indique. Elle devient une alerte quand il reste moins de 24 h.
-
-La date d'expiration est aussi visible dans l'app : Réglages > Application (en rouge à moins de 2 jours).
-
-### Conditions
-
-- Mac allumé, session ouverte. S'il était en veille à l'heure prévue, launchd lance la tâche au réveil.
-- iPhone sur le même Wi-Fi que le Mac (ou branché en USB), idéalement déverrouillé.
-- Xcode toujours connecté à l'Apple ID (Xcode > Settings > Accounts).
-- **Ne jamais supprimer l'app de l'iPhone**, même expirée : réinstaller par-dessus conserve les données,
-  la supprimer les efface définitivement. Si l'app a expiré, lancer simplement `scripts/refresh.sh --force`.
-
-### Commandes utiles
-
-| Action | Commande |
-|---|---|
-| Installer après une modification du code | `scripts/refresh.sh --force` |
-| Lancer la tâche planifiée immédiatement | `launchctl kickstart -p gui/$(id -u)/local.calorieadvisor.refresh` |
-| Consulter le journal | `tail -50 ~/Library/Logs/CalorieAdvisor/refresh.log` |
-| Détail de la compilation / de l'installation | `~/Library/Logs/CalorieAdvisor/xcodebuild.log`, `install.log` |
-| Désinstaller la tâche | `scripts/install-launchd.sh --uninstall` |
-
-### Limites du compte gratuit
-
-- 7 jours de validité par signature.
-- 3 apps installées de cette façon au maximum par appareil.
-- 10 identifiants d'app (bundle id) nouveaux par semaine. Garder le même `BUNDLE_ID`.
-- Capacités indisponibles : iCloud, notifications push, App Groups. Toutes les données restent donc
-  sur l'iPhone (SwiftData), sans synchronisation ni sauvegarde iCloud propre à l'app.
+Limites du compte gratuit : 7 jours par signature, 3 apps par appareil, 10 nouveaux bundle ids par
+semaine ; pas d'iCloud, de notifications push ni d'App Groups. Les données restent donc sur l'iPhone
+(SwiftData), sans synchronisation.
 
 ## Développement
 
 - **Après l'ajout ou la suppression d'un fichier Swift**, régénérer le projet : `xcodegen generate`.
-  `refresh.sh --force` le fait automatiquement. Sans régénération, Xcode ignore les nouveaux fichiers
+  `ios-updater.sh` le fait automatiquement. Sans régénération, Xcode ignore les nouveaux fichiers
   (« cannot find 'X' in scope »).
-- Swift 5 (mode de langage), cible iOS 26.0 minimum.
+- Swift 6 (mode de langage, concurrence stricte), isolation `MainActor` par défaut ; les types valeur
+  utilisés par les modèles SwiftData (`Nutrients`, `FoodTemplate`, `MealType`…) sont `nonisolated`.
+  Cible iOS 26.0 minimum.
+- Tests unitaires (Swift Testing) dans `CalorieAdvisorTests/` : nutriments, note de composition,
+  objectifs, hydratation, journal, base d'aliments. **⌘U** dans Xcode, ou
+  `xcodebuild test -project CalorieAdvisor.xcodeproj -scheme CalorieAdvisor -destination 'platform=iOS Simulator,name=<iPhone>'`.
+
+## Intégration continue
+
+Workflows GitHub Actions standard (skill `github-ci`, dans `.github/workflows/`) :
+
+| Workflow | Déclenchement | Rôle |
+|---|---|---|
+| `test.yml` (`Test`) | chaque push, toutes branches | génère le projet (XcodeGen), compile l'app et lance les tests unitaires sur un simulateur iPhone sans signature ; SwiftLint |
+| `auto_pr.yml` | push sur une autre branche que `main` | ouvre (ou met à jour) une PR vers `main`, description tirée des commits |
+| `release.yml` | `Test` réussi après un push sur `main` | tag semver (`feat:` → mineure, `BREAKING CHANGE` → majeure, sinon patch) + GitHub Release |
+
+Réglage GitHub requis pour `auto_pr.yml` : Settings → Actions → General → Workflow permissions →
+**Allow GitHub Actions to create and approve pull requests**. Messages de commit au format
+Conventional Commits (`feat:`, `fix:`, `ci:`…), dont dépend la version.
+
+SwiftLint (`.swiftlint.yml`, règles du skill apple-skills `ci-cd-setup`) : les violations existantes
+sont gelées dans `.swiftlint-baseline.json`, seules les nouvelles font échouer la CI. En local :
+`swiftlint lint --strict --baseline .swiftlint-baseline.json` (avec
+`DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer` si `xcode-select` pointe sur les Command
+Line Tools). Après correction de violations anciennes : `swiftlint lint --write-baseline .swiftlint-baseline.json`.
+
+Pas de déploiement TestFlight/App Store (compte Apple Developer payant requis) : l'installation sur
+l'iPhone reste assurée par `../ios-updater`.
 
 ## Dépannage
 
@@ -207,18 +149,20 @@ La date d'expiration est aussi visible dans l'app : Réglages > Application (en 
 |---|---|
 | « cannot find 'X' in scope », cible `arm64-apple-macos` | Un fichier `.swift` a été ouvert seul dans Xcode : ouvrir `CalorieAdvisor.xcodeproj` |
 | « cannot find 'X' in scope » après une mise à jour du code | Nouveau fichier non référencé : `xcodegen generate` |
-| « No Account for Team "…" » | `DEVELOPMENT_TEAM` contient le nom de l'équipe au lieu de son identifiant de 10 caractères |
+| « No Account for Team "…" » | `TEAM_ID` (ios-updater.conf) contient le nom de l'équipe au lieu de son identifiant de 10 caractères |
 | « No profiles for '…' were found » | Conséquence de l'erreur précédente, ou Apple ID déconnecté de Xcode |
-| « The specified device was not found » | `DEVICE_ID` erroné (ou valeur d'exemple) dans `scripts/refresh.config` |
+| « The specified device was not found » | `DEVICE` erroné dans `../ios-updater/ios-updater.conf` |
 | « iPhone injoignable » | iPhone pas sur le même Wi-Fi, « Connect via network » non coché, ou iPhone éteint |
-| L'app ne s'ouvre plus | Signature expirée : `scripts/refresh.sh --force` (sans supprimer l'app) |
+| L'app ne s'ouvre plus | Signature expirée : `../ios-updater/ios-updater.sh --force calorie-advisor` (sans supprimer l'app) |
 | Apple Intelligence « Indisponible » | Appareil non compatible, Apple Intelligence désactivé, ou modèle en cours de téléchargement |
 
 ## Structure
 
 ```
 project.yml                   définition XcodeGen (source du projet Xcode)
-Config/                       signature ; Signing.local.xcconfig non versionné
+Config/                       signature ; Signing.local.xcconfig généré par ios-updater
+.github/workflows/            CI : Test, Auto PR, Release
+.swiftlint.yml                règles SwiftLint ; .swiftlint-baseline.json : violations existantes
 CalorieAdvisor/
   App/                        point d'entrée, onglets
   Models/                     FoodEntry, SavedFood (SwiftData), Nutrients, repas, profil,
@@ -227,8 +171,4 @@ CalorieAdvisor/
                               base intégrée, journalisation, statistiques
   Views/                      Journal, Ajout, Tendances, Conseils, Réglages
   Resources/foods_fr.json     base d'aliments (valeurs approximatives de type CIQUAL, pour 100 g/ml)
-scripts/
-  refresh.sh                  re-signature et réinstallation
-  install-launchd.sh          installation de la tâche planifiée
-  refresh.config.example      modèle de configuration (DEVICE_ID)
 ```

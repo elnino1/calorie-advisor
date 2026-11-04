@@ -2,7 +2,7 @@ import Foundation
 import SwiftUI
 
 /// Catégorie d'une boisson, déduite de son nom et de sa teneur en alcool.
-enum DrinkCategory: String, CaseIterable, Identifiable {
+nonisolated enum DrinkCategory: String, CaseIterable, Identifiable, Sendable {
     case water, hot, other, alcohol
 
     var id: String { rawValue }

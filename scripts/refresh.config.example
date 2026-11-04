@@ -1,8 +1,0 @@
-# Copier en scripts/refresh.config puis compléter.
-
-# Identifiant de l'iPhone : `xcrun devicectl list devices` (colonne Identifier)
-DEVICE_ID="00000000-0000000000000000"
-
-# Renouveler la signature quand il reste moins de N heures (le profil gratuit dure 7 jours).
-# Avec une vérification quotidienne, 72 h laisse 3 tentatives si l'iPhone est absent.
-RENEW_THRESHOLD_HOURS=72

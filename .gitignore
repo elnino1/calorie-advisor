@@ -1,6 +1,5 @@
-# --- Configuration personnelle (identifiants propres à votre compte et à votre iPhone) ---
+# --- Signature : générée par ../ios-updater depuis ios-updater.conf ---
 Config/Signing.local.xcconfig
-scripts/refresh.config
 
 # --- Projet Xcode : généré par XcodeGen depuis project.yml ---
 *.xcodeproj/
@@ -44,3 +43,6 @@ xcuserdata/
 .idea/
 *.swp
 *~
+
+# --- Claude Code : réglages locaux ---
+.claude/settings.local.json

@@ -1,6 +1,6 @@
 import Foundation
 
-enum MealType: String, CaseIterable, Identifiable, Codable {
+nonisolated enum MealType: String, CaseIterable, Identifiable, Codable, Sendable {
     case breakfast, lunch, snack, dinner, drinks
 
     /// Les repas proprement dits (sans la section Boissons).
@@ -49,7 +49,7 @@ enum MealType: String, CaseIterable, Identifiable, Codable {
     }
 }
 
-enum FoodUnit: String, CaseIterable, Identifiable, Codable {
+nonisolated enum FoodUnit: String, CaseIterable, Identifiable, Codable, Sendable {
     case gram = "g"
     case milliliter = "ml"
     case portion = "portion"
