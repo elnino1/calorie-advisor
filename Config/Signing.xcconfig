@@ -1,5 +1,5 @@
-// Valeurs par défaut. Ne pas modifier ici : copier Signing.local.xcconfig.example
-// en Signing.local.xcconfig et y mettre votre équipe (Personal Team) et un bundle id unique.
+// Valeurs par défaut. Ne pas modifier ici : Signing.local.xcconfig est généré par
+// ../ios-updater (à partir de ios-updater.conf) et contient l'équipe et le bundle id réels.
 DEVELOPMENT_TEAM =
 BUNDLE_ID = com.example.calorieadvisor
 
