@@ -31,7 +31,12 @@ re-signée automatiquement par un script sur le Mac, la signature gratuite n'ét
 ### Journal (vue du jour)
 
 - Synthèse : apport, dépense (active + repos), anneau « restantes », bandeau déficit/surplus (vert si
-  l'objectif du jour est respecté), répartition protéines / glucides / lipides / alcool.
+  l'objectif du jour est respecté), répartition protéines / glucides / lipides / alcool, fibres par
+  rapport au repère de 30 g/jour.
+- **Note de composition** (0 à 5, au demi-point) de la journée, boissons comprises, avec les deux pistes
+  d'amélioration prioritaires. Six critères notés de 0 à 1 d'après les repères ANSES / OMS :
+  protéines (15 à 30 % des calories), fibres (30 g), sucres (≤ 15 % des calories), lipides (20 à 40 %),
+  alcool (0 g) et hydratation (objectif du jour). Calcul sur l'appareil, sans IA, à partir de 300 kcal saisies.
 - Sections Petit-déjeuner, Déjeuner, Collation, Dîner et **Boissons**, repliables (l'état est mémorisé).
 - Toutes les boissons (entrées en ml, hors soupes) vont dans la section Boissons, quel que soit le mode
   de saisie. Carte **Hydratation** : total bu / objectif, détail eau, café/thé, autres, alcool.
@@ -42,6 +47,10 @@ re-signée automatiquement par un script sur le Mac, la signature gratuite n'ét
 Balance quotidienne par rapport à l'objectif, apport comparé à la dépense, balance cumulée convertie
 en kg, hydratation par jour, poids (Apple Santé) avec le poids cible, répartition moyenne des apports.
 La journée en cours est exclue, de même que les jours sans saisie.
+
+**Bilans par semaine et par mois** (12 dernières semaines ou 12 derniers mois) : déficit ou surplus moyen
+par jour, total et équivalent en kg, jours où l'objectif est atteint, note de composition moyenne et
+évolution par rapport à la période précédente (en vert si l'on se rapproche de l'objectif).
 
 ### Conseils
 

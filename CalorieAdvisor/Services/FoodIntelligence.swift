@@ -19,6 +19,10 @@ struct AIFoodItem {
     var carbs: Double
     @Guide(description: "Lipides en grammes pour la quantité indiquée")
     var fat: Double
+    @Guide(description: "Fibres alimentaires en grammes pour la quantité indiquée")
+    var fiber: Double
+    @Guide(description: "Sucres en grammes pour la quantité indiquée (inclus dans les glucides)")
+    var sugar: Double
     @Guide(description: "Grammes d'alcool pur pour la quantité indiquée, 0 si la boisson est sans alcool")
     var alcohol: Double
 }
@@ -88,10 +92,13 @@ enum FoodIntelligence {
         if !photoLabels.isEmpty {
             prompt += "Une photo du repas a été analysée ; éléments détectés (en anglais, du plus probable au moins probable) : "
             prompt += photoLabels.joined(separator: ", ") + ".\n"
+            prompt += "L'assiette contient souvent plusieurs aliments : retiens chaque aliment plausible de cette liste, "
+            prompt += "en regroupant les étiquettes qui désignent le même aliment (ex. « beef » et « steak ») "
+            prompt += "et en ignorant celles qui ne sont pas des aliments.\n"
         }
         let trimmed = description.trimmingCharacters(in: .whitespacesAndNewlines)
         if !trimmed.isEmpty {
-            prompt += "Description de l'utilisateur : \(trimmed)\n"
+            prompt += "Description de l'utilisateur (prioritaire sur la photo, chaque aliment cité doit figurer) : \(trimmed)\n"
         }
         prompt += "Liste les aliments et boissons consommés avec leurs quantités et valeurs nutritionnelles."
 
@@ -112,6 +119,7 @@ enum FoodIntelligence {
         }
         var nutrients = Nutrients(kcal: max(item.kcal, 0), protein: max(item.protein, 0),
                                   carbs: max(item.carbs, 0), fat: max(item.fat, 0),
+                                  fiber: max(item.fiber, 0), sugar: max(item.sugar, 0),
                                   alcohol: max(item.alcohol, 0))
         if nutrients.kcal == 0 { nutrients.kcal = nutrients.kcalFromMacros }
         return FoodTemplate(name: item.name, unit: item.isDrink ? .milliliter : .gram,

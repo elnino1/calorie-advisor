@@ -57,7 +57,7 @@ struct PhotoEntryView: View {
                 } header: {
                     Text("Précisions (recommandé)")
                 } footer: {
-                    Text("Le modèle d'Apple Intelligence s'exécute sur l'iPhone. Plus la description est précise, meilleure est l'estimation.")
+                    Text("La reconnaissance d'image peut manquer des aliments : listez ce qu'il y a dans l'assiette (ex. « quinoa, filet de bœuf, avocat »). Le modèle d'Apple Intelligence s'exécute sur l'iPhone.")
                 }
 
                 Section {

@@ -11,19 +11,39 @@ enum PhotoClassifier {
         "people", "adult", "hand", "consumable", "cookware", "kitchen", "restaurant",
     ]
 
-    static func labels(for image: UIImage, max count: Int = 8) async -> [String] {
+    /// Classe l'image entière puis chaque quart et le centre : sur une image entière, l'aliment
+    /// dominant écrase les autres (une assiette quinoa-bœuf-avocat ne donnait que « quinoa »).
+    /// Pour chaque étiquette, on garde la meilleure confiance obtenue.
+    static func labels(for image: UIImage, max count: Int = 10) async -> [String] {
         guard let cgImage = image.cgImage else { return [] }
-        do {
-            let observations = try await ClassifyImageRequest().perform(on: cgImage, orientation: image.cgOrientation)
-            return observations
-                .filter { $0.confidence > 0.15 && !ignored.contains($0.identifier) }
-                .sorted { $0.confidence > $1.confidence }
-                .prefix(count)
-                .map { $0.identifier.replacingOccurrences(of: "_", with: " ") }
-        } catch {
-            print("Vision classification failed: \(error)")
-            return []
+        let w = CGFloat(cgImage.width), h = CGFloat(cgImage.height)
+        let regions = [
+            CGRect(x: 0, y: 0, width: w / 2, height: h / 2),
+            CGRect(x: w / 2, y: 0, width: w / 2, height: h / 2),
+            CGRect(x: 0, y: h / 2, width: w / 2, height: h / 2),
+            CGRect(x: w / 2, y: h / 2, width: w / 2, height: h / 2),
+            CGRect(x: w / 4, y: h / 4, width: w / 2, height: h / 2),
+        ]
+        let images = [cgImage] + regions.compactMap { cgImage.cropping(to: $0.integral) }
+
+        var best: [String: Float] = [:]
+        for (index, part) in images.enumerated() {
+            do {
+                let observations = try await ClassifyImageRequest().perform(on: part, orientation: image.cgOrientation)
+                // Seuil plus exigeant sur les zones, où les faux positifs sont plus fréquents.
+                let threshold: Float = index == 0 ? 0.08 : 0.25
+                for observation in observations
+                where observation.confidence > threshold && !ignored.contains(observation.identifier) {
+                    best[observation.identifier] = Swift.max(best[observation.identifier] ?? 0, observation.confidence)
+                }
+            } catch {
+                print("Vision classification failed: \(error)")
+            }
         }
+        return best
+            .sorted { $0.value > $1.value }
+            .prefix(count)
+            .map { $0.key.replacingOccurrences(of: "_", with: " ") }
     }
 }
 

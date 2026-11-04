@@ -28,6 +28,10 @@ final class EnergyStore {
 
     private(set) var latestWeight: Double?
     var isHealthAvailable: Bool { HKHealthStore.isHealthDataAvailable() }
+    /// Incrémenté quand la dépense a pu changer (nouvelles données Santé, retour au premier plan) :
+    /// les vues qui affichent la dépense la relisent.
+    private(set) var revision = 0
+    private var observers: [HKObserverQuery] = []
 
     private var readTypes: Set<HKObjectType> {
         [HKQuantityType(.activeEnergyBurned), HKQuantityType(.basalEnergyBurned), HKQuantityType(.bodyMass)]
@@ -41,6 +45,22 @@ final class EnergyStore {
             print("HealthKit authorization failed: \(error)")
         }
     }
+
+    /// Surveille les nouvelles données de dépense tant que l'app tourne (ex. séance synchronisée par la montre).
+    func startObserving() {
+        guard isHealthAvailable, observers.isEmpty else { return }
+        for type in [HKQuantityType(.activeEnergyBurned), HKQuantityType(.basalEnergyBurned)] {
+            let query = HKObserverQuery(sampleType: type, predicate: nil) { [weak self] _, completion, error in
+                completion()
+                guard error == nil else { return }
+                Task { @MainActor in self?.refresh() }
+            }
+            store.execute(query)
+            observers.append(query)
+        }
+    }
+
+    func refresh() { revision += 1 }
 
     func energy(on day: Date) async -> DayEnergy {
         let map = await energy(from: day, through: day)
